@@ -1,7 +1,7 @@
 from urllib.request import urlopen
 from link_finder import LinkFinder
 from domain import *
-from general import *
+from General import General
 
 
 class Spider:
@@ -10,7 +10,7 @@ class Spider:
     base_url = ''
     domain_name = ''
     queue_file = ''
-    crawled_file = ''
+    general = General()
     queue = set()
     crawled = set()
 
@@ -19,17 +19,19 @@ class Spider:
         Spider.base_url = base_url
         Spider.domain_name = domain_name
         Spider.queue_file = Spider.project_name + '/queue.txt'
-        Spider.crawled_file = Spider.project_name + '/crawled.txt'
         self.boot()
         self.crawl_page('First spider', Spider.base_url)
 
     # Creates directory and files for project on first run and starts the spider
     @staticmethod
     def boot():
-        create_project_dir(Spider.project_name)
-        create_data_files(Spider.project_name, Spider.base_url)
-        Spider.queue = file_to_set(Spider.queue_file)
-        Spider.crawled = file_to_set(Spider.crawled_file)
+        Spider.general.create_project_dir(Spider.project_name)
+        Spider.general.create_data_files(Spider.project_name, Spider.base_url)
+        Spider.queue = Spider.general.file_to_set(Spider.queue_file)
+        Spider.general.save_site(Spider.project_name,Spider.base_url)
+        # create_data_files(Spider.project_name, Spider.base_url)
+
+
 
     # Updates user display, fills queue and updates files
     @staticmethod
@@ -38,8 +40,10 @@ class Spider:
             print(thread_name + ' now crawling ' + page_url)
             print('Queue ' + str(len(Spider.queue)) + ' | Crawled  ' + str(len(Spider.crawled)))
             Spider.add_links_to_queue(Spider.gather_links(page_url))
-            Spider.queue.remove(page_url)
-            Spider.crawled.add(page_url)
+            if page_url in Spider.queue:
+                Spider.queue.remove(page_url)
+            if page_url.find('papa') != -1 or page_url.find('vaticano') != -1 or page_url.find('bispos') != -1:
+                Spider.crawled.add(page_url)
             Spider.update_files()
 
     # Converts raw response data into readable information and checks for proper html formatting
@@ -70,5 +74,6 @@ class Spider:
 
     @staticmethod
     def update_files():
-        set_to_file(Spider.queue, Spider.queue_file)
-        set_to_file(Spider.crawled, Spider.crawled_file)
+        Spider.general.set_to_file(Spider.queue, Spider.queue_file)
+        # Spider.general.save_queue(Spider.project_name, Spider.queue)
+        Spider.general.save_news(Spider.project_name, Spider.crawled)
